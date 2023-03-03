@@ -78,6 +78,21 @@ const SetPin = ({ route, navigation }) => {
     );
   };
 
+  const wrongPin = () => {
+    setCode("");
+    Alert.alert(
+      "Incorrect Pin",
+      "The pin you provided was incorrect, Please try again",
+      [
+        {
+          text: "Ok",
+          onPress: () => {},
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const toDigitInput = (_value, idx) => {
     const emptyInputChar = " ";
     const digit = code[idx] || emptyInputChar;

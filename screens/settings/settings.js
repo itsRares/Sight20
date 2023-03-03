@@ -14,7 +14,9 @@ import { getSecurePin } from "../../helpers/access";
 const Settings = ({ navigation }) => {
   const { colors, isDark } = useTheme();
   const version = Constants.manifest.version;
-  const { hideSchedule } = useSelector((state) => state.defaultsReducer);
+  const { hideSchedule, parentalLock } = useSelector(
+    (state) => state.defaultsReducer
+  );
 
   const _openLink = async (url) => {
     await WebBrowser.openBrowserAsync(url);
@@ -49,7 +51,7 @@ const Settings = ({ navigation }) => {
             Ricon={"chevron-right"}
             onPressAction={async () => {
               let securePin = await getSecurePin("user_pin");
-              if (securePin === null) {
+              if (securePin === null || !parentalLock) {
                 navigation.navigate("ParentalControls");
               } else {
                 navigation.navigate("SetPin", {

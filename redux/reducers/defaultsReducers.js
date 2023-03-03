@@ -3,6 +3,7 @@ import {
   UPDATED_HIDESTOP,
   UPDATED_HIDESCHEDULE,
   UPDATED_SCHEDULE,
+  UPDATED_STARTDATE,
 } from "../actions/defaultsActions";
 
 const initialState = {
@@ -12,6 +13,7 @@ const initialState = {
   scheduleType: "Forever",
   scheduleInterval: 5,
   schedule: {},
+  startDate: null,
 };
 
 const defaultsReducer = (state = initialState, action) => {
@@ -35,6 +37,11 @@ const defaultsReducer = (state = initialState, action) => {
       return {
         ...state,
         ...action.payload,
+      };
+    case UPDATED_STARTDATE:
+      return {
+        ...state,
+        startDate: action.payload,
       };
     default:
       return state;

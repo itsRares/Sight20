@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, Dimensions, Text } from "react-native";
+import { ScrollView, StyleSheet, View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles } from "../../styles/global";
 import LargeTitle from "../../components/largeTitle";
-import SwitchField from "../../components/switchField";
 import { useTheme } from "../../contexts/themeContext";
-import { CheckBox } from "@rneui/themed";
 import SubmitButton from "../../components/submitButton";
 import DropdownField from "../../components/dropdownField";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +17,7 @@ const Schedule = ({ navigation }) => {
   const { colors } = useTheme();
   const [type, setType] = useState("Forever");
   const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
   const [interval, setInterval] = useState(5);
   const dispatch = useDispatch();
   const [startSelected, setStartSelected] = useState(true);
@@ -27,7 +26,7 @@ const Schedule = ({ navigation }) => {
   const [endDateValue, setEndDateValue] = useState("");
   const [endDate, setEndDate] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [duration, setDuration] = useState("M");
+  const [duration, setDuration] = useState("");
 
   const { scheduleType, scheduleInterval, schedule } = useSelector(
     (state) => state.defaultsReducer
@@ -39,18 +38,31 @@ const Schedule = ({ navigation }) => {
   useEffect(() => {
     setType(scheduleType);
     setInterval(scheduleInterval);
-    setDuration(schedule?.days);
-    if (schedule?.startTime !== undefined) {
-      setStartDateValue(format(schedule?.startTime, "H:m"));
+    if (schedule?.days !== undefined) {
+      setDuration(schedule?.days);
+    }
+    if (schedule?.startTime !== undefined && schedule.startTime) {
+      setStartDateValue(format(new Date(schedule?.startTime), "H:mm"));
       setStartDate(schedule?.startTime);
     }
-    if (schedule?.endTime !== undefined) {
-      setEndDateValue(format(schedule?.endTime, "H:m"));
+    if (schedule?.endTime !== undefined && schedule.endTime) {
+      setEndDateValue(format(new Date(schedule?.endTime), "H:mm"));
       setEndDate(schedule?.endTime);
     }
   }, []);
 
   const saveSchedule = () => {
+    setError(null);
+    if (type === "Schedule" && duration === "") {
+      setError("Please select the days you want to be reminded on.");
+      return;
+    }
+
+    if (type === "Schedule" && (startDate === null || endDate === null)) {
+      setError("Please select a StartTime and EndTime.");
+      return;
+    }
+
     let scheduleTemp = {
       scheduleType: type,
       scheduleInterval: interval,
@@ -73,7 +85,10 @@ const Schedule = ({ navigation }) => {
   };
 
   const handleConfirm = ({ date }) => {
-    var formattedDate = format(date, "H:m");
+    setMessage(null);
+    setError(null);
+
+    var formattedDate = format(date, "H:mm");
     if (startSelected) {
       setStartDateValue(formattedDate);
       setStartDate(date);
@@ -85,10 +100,15 @@ const Schedule = ({ navigation }) => {
   };
 
   const updateDuration = (value) => {
+    setMessage(null);
+    setError(null);
+
     let durTemp = duration;
     if (durTemp?.includes(value)) {
+      //Remove from list
       setDuration(durTemp.replaceAll(value, ""));
     } else {
+      //Add to list
       setDuration((durTemp += value));
     }
   };
@@ -109,7 +129,7 @@ const Schedule = ({ navigation }) => {
         />
         <View style={globalStyles.contentWrap}>
           <DropdownField
-            title="Run Amount"
+            title="Run Type"
             placeholder="Please select one"
             value={type}
             items={[
@@ -118,7 +138,6 @@ const Schedule = ({ navigation }) => {
               { label: "Interval", value: "Interval" },
             ]}
             onUpdate={(value) => {
-              setMessage(null);
               setType(value);
             }}
           />
@@ -133,7 +152,6 @@ const Schedule = ({ navigation }) => {
                 { label: "20", value: 20 },
               ]}
               onUpdate={(value) => {
-                setMessage(null);
                 setInterval(value);
               }}
             />
@@ -159,7 +177,7 @@ const Schedule = ({ navigation }) => {
                 >
                   <InputField
                     title="Start"
-                    icon="calendar"
+                    icon="clock"
                     editable={false}
                     value={startDateValue}
                     extraStyles={{ width: 120 }}
@@ -173,7 +191,7 @@ const Schedule = ({ navigation }) => {
                 >
                   <InputField
                     title="End"
-                    icon="calendar"
+                    icon="clock"
                     editable={false}
                     value={endDateValue}
                     extraStyles={{ width: 120 }}
@@ -298,6 +316,11 @@ const Schedule = ({ navigation }) => {
               style={{ ...styles.successMessage, color: colors.secondaryText }}
             >
               {message}
+            </Text>
+          )}
+          {error && (
+            <Text style={{ ...styles.successMessage, color: "red" }}>
+              {error}
             </Text>
           )}
         </View>

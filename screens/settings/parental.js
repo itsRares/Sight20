@@ -41,7 +41,7 @@ const ParentalControls = ({ navigation }) => {
         <LargeTitle
           icon="chevron-back-sharp"
           onPressAction={() => navigation.pop()}
-          text={"Parental Tools"}
+          text={"Parental Controls"}
         />
         <View style={globalStyles.contentWrap}>
           <SwitchField
@@ -57,7 +57,7 @@ const ParentalControls = ({ navigation }) => {
                 });
               } else {
                 deleteSecurePin("user_pin").then((e) => {
-                  console.log("reset");
+                  console.log("Deleted Pin!");
                 });
               }
             }}
@@ -114,6 +114,11 @@ const ParentalControls = ({ navigation }) => {
               <SubmitButton
                 text="Update Pin"
                 extraStyles={{ alignSelf: "flex-start", marginTop: -10 }}
+                onPressAction={() => {
+                  navigation.navigate("SetPin", {
+                    enterCode: false,
+                  });
+                }}
               />
             </>
           )}

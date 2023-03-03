@@ -1,13 +1,12 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   View,
-  AppState,
   TouchableWithoutFeedback,
   Dimensions,
+  AppState,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles } from "../../styles/global";
@@ -19,7 +18,11 @@ import SubmitButton from "../../components/submitButton";
 import ModalSheet from "../../components/modalSheet";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import * as WebBrowser from "expo-web-browser";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { fontPixel } from "../../helpers/responsive";
+import { calcScheduler } from "../../helpers/scheduler";
+import { updateStartDate } from "../../redux/actions/defaultsActions";
+import moment from "moment";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -60,21 +63,27 @@ const facts = [
 
 const Home = ({ navigation }) => {
   const refRBSheet = useRef();
+  const prevState = useRef(null);
+  const refSchedule = useRef(null);
+  const sType = useRef(null);
+  const refDate = useRef(null);
+  const dispatch = useDispatch();
   const { colors, isDark } = useTheme();
-  const [counter, setCounter] = useState(1200);
+  const [counter, setCounter] = useState(1220);
   const [fact, setFact] = useState("");
   const [startCountdown, setStartCountdown] = useState(false);
 
-  const { hideStop, scheduleType } = useSelector(
-    (state) => state.defaultsReducer
-  );
+  const { hideStop, scheduleType, scheduleInterval, schedule, startDate } =
+    useSelector((state) => state.defaultsReducer);
+  const updateStartDateDispatch = (value) => dispatch(updateStartDate(value));
 
   useEffect(() => {
-    var item = facts[Math.floor(Math.random() * facts.length)];
-    setFact(item);
     if (startCountdown) {
       const timer =
-        counter > 0 && setInterval(() => setCounter(counter - 1), 1000);
+        counter > 0 &&
+        setInterval(() => {
+          setCounter(counter - 1);
+        }, 1000);
 
       return () => clearInterval(timer);
     }
@@ -84,17 +93,79 @@ const Home = ({ navigation }) => {
   }, [counter, startCountdown]);
 
   useEffect(() => {
+    refDate.current = startDate;
+    sType.current = scheduleType;
+    refSchedule.current = schedule;
+  }, [startDate, scheduleType, schedule]);
+
+  useEffect(() => {
+    if (scheduleType === "Schedule") {
+      calcScheduler(true, scheduleType, scheduleInterval, schedule).then(() => {
+        updateStartDateDispatch(new Date(Date.now()));
+        findCorrectSchedule();
+      });
+    }
+  }, [scheduleType]);
+
+  useEffect(() => {
+    var item = facts[Math.floor(Math.random() * facts.length)];
+    setFact(item);
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (nextAppState === "active") {
-        var item = facts[Math.floor(Math.random() * facts.length)];
-        setFact(item);
+      if (prevState.current === "background" && nextAppState === "active") {
+        if (sType.current === "Schedule") {
+          findCorrectSchedule();
+        } else {
+          findCorrectTime();
+        }
       }
+      prevState.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
     };
   }, []);
+
+  const findCorrectSchedule = () => {
+    let today = new Date(Date.now());
+    let todayString = today.getDay();
+
+    if (refSchedule.current) {
+      let tmpSchedule = refSchedule.current;
+      if (tmpSchedule.days.includes(todayString)) {
+        let curStart = moment().startOf("day");
+        let curEnd = moment().endOf("day");
+        let schStart = new Date(tmpSchedule.startTime);
+        let schEnd = moment(tmpSchedule.endTime);
+
+        //Add the hours and minutes
+        //curStart.add(schStart.utc().hours(), "hours");
+
+        console.log(curStart);
+      }
+      console.log(todayString, refSchedule.current);
+    }
+  };
+
+  const findCorrectTime = () => {
+    if (refDate.current !== null && refDate.current !== undefined) {
+      var secondBetweenTwoDate = Math.abs(
+        (new Date(Date.now()).getTime() - new Date(refDate.current).getTime()) /
+          1000
+      ).toFixed();
+      if (sType.current !== "Interval") {
+        setCounter(1220 - (secondBetweenTwoDate % 1220));
+      } else {
+        let intAmt = sType.current * 1220;
+        if (secondBetweenTwoDate < intAmt) {
+          setCounter(1220 - (secondBetweenTwoDate % 1220));
+        } else {
+          setStartCountdown(false);
+          setCounter(1220);
+        }
+      }
+    }
+  };
 
   registerForPushNotificationsAsync = async () => {
     let token;
@@ -141,7 +212,7 @@ const Home = ({ navigation }) => {
 
   const renderTime = ({ remainingTime }) => {
     if (remainingTime === 0) {
-      setCounter(10);
+      setCounter(120);
       setStartCountdown(true);
     }
 
@@ -182,14 +253,14 @@ const Home = ({ navigation }) => {
             </TouchableWithoutFeedback>
           </View>
 
-          {counter !== 0 ? (
+          {counter > 20 ? (
             <>
               <View style={styles.monthlyWrap}>
                 <View style={styles.iconWrap}>
                   <Image source={getAsset()} style={styles.icon} />
                 </View>
                 <Text style={{ ...styles.monthAmountText }}>
-                  {format(counter)}
+                  {format(counter - 20)}
                 </Text>
                 <Text style={{ ...styles.monthText, color: colors.text }}>
                   {startCountdown
@@ -202,7 +273,12 @@ const Home = ({ navigation }) => {
                 </Text>
               </View>
               <View style={styles.infoWrap}>
-                <View style={styles.progressWrap}>
+                <View
+                  style={{
+                    ...styles.progressWrap,
+                    borderColor: colors.borderColor,
+                  }}
+                >
                   <View
                     style={{
                       ...styles.progress,
@@ -238,10 +314,19 @@ const Home = ({ navigation }) => {
             <SubmitButton
               text={startCountdown ? "Stop" : "Start"}
               onPressAction={() => {
-                setStartCountdown(!startCountdown);
-                if (startCountdown) {
-                  setCounter(1200);
+                let count = !startCountdown;
+                setStartCountdown(count);
+                if (!count) {
+                  setCounter(1220);
                 }
+                calcScheduler(
+                  count,
+                  scheduleType,
+                  scheduleInterval,
+                  schedule
+                ).then(() => {
+                  updateStartDateDispatch(new Date(Date.now()));
+                });
               }}
             />
           )}
@@ -315,14 +400,14 @@ const styles = StyleSheet.create({
   },
   monthAmountText: {
     fontFamily: "M-Bold",
-    fontSize: 50,
+    fontSize: fontPixel(50),
     textAlign: "center",
     marginTop: -15,
     color: "#16A085",
   },
   monthText: {
     fontFamily: "M-Bold",
-    fontSize: 15,
+    fontSize: fontPixel(15),
     textAlign: "center",
   },
   bottomHelp: {
@@ -336,14 +421,14 @@ const styles = StyleSheet.create({
   },
   bottomHelpText: {
     fontFamily: "M-SBold",
-    fontSize: 16,
+    fontSize: fontPixel(16),
     marginBottom: 20,
   },
   infoWrap: {
-    marginBottom: 30,
+    marginBottom: 40,
   },
   progressWrap: {
-    width: 280,
+    width: Dimensions.get("screen").width * 0.75,
     alignSelf: "center",
     borderRadius: 7,
     borderWidth: 3,
@@ -358,20 +443,20 @@ const styles = StyleSheet.create({
     width: 280,
     alignSelf: "center",
     fontFamily: "M-Medium",
-    fontSize: 14,
+    fontSize: fontPixel(14),
     textAlign: "center",
     marginTop: 10,
   },
   breakText: {
     textAlign: "center",
     fontFamily: "M-SBold",
-    fontSize: 18,
+    fontSize: fontPixel(18),
     marginTop: 15,
     marginBottom: 30,
   },
   scheduledReminder: {
     fontFamily: "M-SBold",
-    fontSize: 14,
+    fontSize: fontPixel(14),
     textAlign: "center",
     width: 270,
     alignSelf: "center",

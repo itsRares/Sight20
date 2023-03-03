@@ -3,7 +3,7 @@ export const UPDATED_PARENTALLOCK = "UPDATED_PARENTALLOCK";
 export const UPDATED_HIDESTOP = "UPDATED_HIDESTOP";
 export const UPDATED_HIDESCHEDULE = "UPDATED_HIDESCHEDULE";
 export const UPDATED_SCHEDULE = "UPDATED_SCHEDULE";
-export const LETMEIN = "LETMEIN";
+export const UPDATED_STARTDATE = "UPDATED_STARTDATE";
 
 export const updatedParentalLock = (value) => (dispatch) => {
   dispatch({
@@ -33,9 +33,9 @@ export const updateSchedule = (value) => (dispatch) => {
   });
 };
 
-export const letMeIn = () => (dispatch) => {
+export const updateStartDate = (value) => (dispatch) => {
   dispatch({
-    type: UPDATED_SCHEDULE,
-    payload: true,
+    type: UPDATED_STARTDATE,
+    payload: value,
   });
 };

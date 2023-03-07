@@ -73,8 +73,14 @@ const Home = ({ navigation }) => {
   const [fact, setFact] = useState("");
   const [startCountdown, setStartCountdown] = useState(false);
 
-  const { hideStop, scheduleType, scheduleInterval, schedule, startDate } =
-    useSelector((state) => state.defaultsReducer);
+  const {
+    hideStop,
+    scheduleType,
+    updated,
+    scheduleInterval,
+    schedule,
+    startDate,
+  } = useSelector((state) => state.defaultsReducer);
   const updateStartDateDispatch = (value) => dispatch(updateStartDate(value));
 
   useEffect(() => {
@@ -93,6 +99,11 @@ const Home = ({ navigation }) => {
   }, [counter, startCountdown]);
 
   useEffect(() => {
+    setCounter(1220);
+    setStartCountdown(false);
+  }, [schedule]);
+
+  useEffect(() => {
     refDate.current = startDate;
     sType.current = scheduleType;
     refSchedule.current = schedule;
@@ -105,18 +116,14 @@ const Home = ({ navigation }) => {
         findCorrectSchedule();
       });
     }
-  }, [scheduleType]);
+  }, [scheduleType, schedule]);
 
   useEffect(() => {
     var item = facts[Math.floor(Math.random() * facts.length)];
     setFact(item);
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (prevState.current === "background" && nextAppState === "active") {
-        if (sType.current === "Schedule") {
-          findCorrectSchedule();
-        } else {
-          findCorrectTime();
-        }
+        calcTime();
       }
       prevState.current = nextAppState;
     });
@@ -124,7 +131,15 @@ const Home = ({ navigation }) => {
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [scheduleType, schedule]);
+
+  const calcTime = () => {
+    if (sType.current === "Schedule") {
+      findCorrectSchedule();
+    } else {
+      findCorrectTime();
+    }
+  };
 
   const findCorrectSchedule = () => {
     let today = new Date(Date.now());
@@ -133,17 +148,60 @@ const Home = ({ navigation }) => {
     if (refSchedule.current) {
       let tmpSchedule = refSchedule.current;
       if (tmpSchedule.days.includes(todayString)) {
-        let curStart = moment().startOf("day");
-        let curEnd = moment().endOf("day");
-        let schStart = new Date(tmpSchedule.startTime);
-        let schEnd = moment(tmpSchedule.endTime);
+        let curTimeFormatted = moment().startOf("day");
+        let curBeforeFormatted = moment().startOf("day");
+        let curAfterFormatted = moment().startOf("day");
 
-        //Add the hours and minutes
-        //curStart.add(schStart.utc().hours(), "hours");
+        let time = moment();
+        let beforeTime = moment(tmpSchedule.startTime);
+        let afterTime = moment(tmpSchedule.endTime);
 
-        console.log(curStart);
+        time = curTimeFormatted.set({
+          hour: time.hour(),
+          minute: time.minute(),
+          second: time.second(),
+        });
+
+        beforeTime = curBeforeFormatted.set({
+          hour: beforeTime.hour(),
+          minute: beforeTime.minute(),
+          second: beforeTime.second(),
+        });
+
+        afterTime = curAfterFormatted.set({
+          hour: afterTime.hour(),
+          minute: afterTime.minute(),
+          second: afterTime.second(),
+        });
+
+        let calcTime = Math.floor(
+          (time.valueOf() / 1000 - (beforeTime.valueOf() / 1000).toFixed(0)) /
+            1220
+        );
+
+        if (time.isBetween(beforeTime, afterTime)) {
+          let nextAlarm = {
+            minutes: 20 * (calcTime + 1),
+            seconds: 20 * (calcTime + 1),
+          };
+          let prevAlarm = {
+            minutes: 20 * calcTime,
+            seconds: 20 * calcTime,
+          };
+
+          let nextTime = moment(beforeTime).add(nextAlarm);
+          let prevTime = moment(beforeTime).add(prevAlarm);
+
+          var duration = moment.duration(time.diff(prevTime));
+          var aa = duration.asSeconds();
+
+          setStartCountdown(true);
+          setCounter(1220 - aa);
+        } else {
+          setStartCountdown(false);
+          setCounter(1220);
+        }
       }
-      console.log(todayString, refSchedule.current);
     }
   };
 
@@ -212,8 +270,7 @@ const Home = ({ navigation }) => {
 
   const renderTime = ({ remainingTime }) => {
     if (remainingTime === 0) {
-      setCounter(120);
-      setStartCountdown(true);
+      calcTime();
     }
 
     return (
@@ -332,7 +389,7 @@ const Home = ({ navigation }) => {
           )}
 
           {scheduleType === "Schedule" && (
-            <Text style={styles.scheduledReminder}>
+            <Text style={{ ...styles.scheduledReminder, color: colors.text }}>
               Your reminders are scheduled! Check your preferences in settings.
             </Text>
           )}

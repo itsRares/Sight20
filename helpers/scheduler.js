@@ -71,15 +71,20 @@ const runInterval = async (amt) => {
     },
   });
 
+  console.log({
+    seconds: 60 * 20,
+    repeats: false,
+  });
+
   //Then Schedule interval amount 20min 20 seconds reminders - 2
   let amtTemp = amt - 1;
   let finalAmt = 0;
   for (let ii = 1; ii <= amtTemp; ii++) {
-    finalAmt = (60 * 20 + 20) * ii;
+    finalAmt = 60 * 20 * (ii + 1) + 20 * ii;
     await Notifications.scheduleNotificationAsync({
       content: localNotificationText,
       trigger: {
-        seconds: (60 * 20 + 20) * ii,
+        seconds: finalAmt,
         repeats: false,
       },
     });
@@ -133,6 +138,7 @@ const scheduleInbetweenDates = async (startTime, endTime, day) => {
   for (let ii = 1; ii <= calcTime; ii++) {
     finalAmt = 60 * 20 + 20;
     tempTime.setTime(tempTime.getTime() + finalAmt * 1000);
+
     await Notifications.scheduleNotificationAsync({
       content: localNotificationText,
       trigger: {

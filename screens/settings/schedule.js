@@ -12,6 +12,7 @@ import TouchableItem from "../../components/touchableItem";
 import InputField from "../../components/inputField";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
+import * as Notifications from "expo-notifications";
 
 const Schedule = ({ navigation }) => {
   const { colors } = useTheme();
@@ -25,8 +26,40 @@ const Schedule = ({ navigation }) => {
   const [startDate, setStartDate] = useState(null);
   const [endDateValue, setEndDateValue] = useState("");
   const [endDate, setEndDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [duration, setDuration] = useState("");
+
+  const daysOfWeek = [
+    {
+      day: "M",
+      index: "1",
+    },
+    {
+      day: "T",
+      index: "2",
+    },
+    {
+      day: "W",
+      index: "3",
+    },
+    {
+      day: "T",
+      index: "4",
+    },
+    {
+      day: "F",
+      index: "5",
+    },
+    {
+      day: "S",
+      index: "6",
+    },
+    {
+      day: "S",
+      index: "7",
+    },
+  ];
 
   const { scheduleType, scheduleInterval, schedule } = useSelector(
     (state) => state.defaultsReducer
@@ -72,8 +105,11 @@ const Schedule = ({ navigation }) => {
         endTime: endDate,
       },
     };
-    updateScheduleDispatch(scheduleTemp);
-    setMessage("Success! Your reminder schedule has been updated");
+
+    Notifications.cancelAllScheduledNotificationsAsync().then(() => {
+      updateScheduleDispatch(scheduleTemp);
+      setMessage("Success! Your reminder schedule has been updated");
+    });
   };
 
   const showDatePicker = () => {
@@ -172,6 +208,7 @@ const Schedule = ({ navigation }) => {
                 <TouchableItem
                   onPressAction={() => {
                     setStartSelected(true);
+                    setSelectedDate(new Date(startDate));
                     showDatePicker();
                   }}
                 >
@@ -186,6 +223,7 @@ const Schedule = ({ navigation }) => {
                 <TouchableItem
                   onPressAction={() => {
                     setStartSelected(false);
+                    setSelectedDate(new Date(endDate));
                     showDatePicker();
                   }}
                 >
@@ -204,109 +242,29 @@ const Schedule = ({ navigation }) => {
                   backgroundColor: colors.secondaryBackground,
                 }}
               >
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("1") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("1")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
+                {daysOfWeek.map((e, i) => {
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.filterOptionWrap,
+                        duration?.includes(e.index)
+                          ? styles.backgroundDark
+                          : null,
+                      ]}
                     >
-                      M
-                    </Text>
-                  </TouchableItem>
-                </View>
-
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("2") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("2")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      T
-                    </Text>
-                  </TouchableItem>
-                </View>
-
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("3") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("3")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      W
-                    </Text>
-                  </TouchableItem>
-                </View>
-
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("4") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("4")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      T
-                    </Text>
-                  </TouchableItem>
-                </View>
-
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("5") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("5")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      F
-                    </Text>
-                  </TouchableItem>
-                </View>
-
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("6") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("6")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      S
-                    </Text>
-                  </TouchableItem>
-                </View>
-                <View
-                  style={[
-                    styles.filterOptionWrap,
-                    duration?.includes("7") ? styles.backgroundDark : null,
-                  ]}
-                >
-                  <TouchableItem onPressAction={() => updateDuration("7")}>
-                    <Text
-                      style={{ ...styles.filterOption, color: colors.text }}
-                    >
-                      S
-                    </Text>
-                  </TouchableItem>
-                </View>
+                      <TouchableItem
+                        onPressAction={() => updateDuration(e.index)}
+                      >
+                        <Text
+                          style={{ ...styles.filterOption, color: colors.text }}
+                        >
+                          {e.day}
+                        </Text>
+                      </TouchableItem>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           )}
@@ -330,6 +288,8 @@ const Schedule = ({ navigation }) => {
         textColor={colors.text}
         isVisible={isDatePickerVisible}
         mode="time"
+        locale="en_GB"
+        date={selectedDate}
         onConfirm={(date) => handleConfirm({ date: date })}
         onCancel={hideDatePicker}
       />

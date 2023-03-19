@@ -13,6 +13,7 @@ import InputField from "../../components/inputField";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { format } from "date-fns";
 import * as Notifications from "expo-notifications";
+import moment from "moment";
 
 const Schedule = ({ navigation }) => {
   const { colors } = useTheme();
@@ -94,6 +95,21 @@ const Schedule = ({ navigation }) => {
     if (type === "Schedule" && (startDate === null || endDate === null)) {
       setError("Please select a StartTime and EndTime.");
       return;
+    }
+
+    let startHour = moment(startDate).hour();
+    let endHour = moment(endDate).hour();
+    let startMinute = moment(startDate).minute();
+    let endMinute = moment(endDate).minute();
+
+    if (endHour < startHour) {
+      setError("End time needs to be greater than start time");
+      return;
+    } else if (endHour === startHour) {
+      if (endMinute < startMinute) {
+        setError("End time needs to be greater than start time");
+        return;
+      }
     }
 
     let scheduleTemp = {

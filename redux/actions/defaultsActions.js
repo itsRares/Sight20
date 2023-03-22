@@ -4,6 +4,7 @@ export const UPDATED_HIDESTOP = "UPDATED_HIDESTOP";
 export const UPDATED_HIDESCHEDULE = "UPDATED_HIDESCHEDULE";
 export const UPDATED_SCHEDULE = "UPDATED_SCHEDULE";
 export const UPDATED_STARTDATE = "UPDATED_STARTDATE";
+export const ACCEPT_REGISTER = "ACCEPT_REGISTER";
 
 export const updatedParentalLock = (value) => (dispatch) => {
   dispatch({
@@ -37,5 +38,11 @@ export const updateStartDate = (value) => (dispatch) => {
   dispatch({
     type: UPDATED_STARTDATE,
     payload: value,
+  });
+};
+
+export const acceptRegister = () => (dispatch) => {
+  dispatch({
+    type: ACCEPT_REGISTER,
   });
 };

@@ -4,6 +4,7 @@ import {
   UPDATED_HIDESCHEDULE,
   UPDATED_SCHEDULE,
   UPDATED_STARTDATE,
+  ACCEPT_REGISTER,
 } from "../actions/defaultsActions";
 
 const initialState = {
@@ -14,6 +15,7 @@ const initialState = {
   scheduleInterval: 5,
   schedule: {},
   startDate: null,
+  acceptedRegister: false,
 };
 
 const defaultsReducer = (state = initialState, action) => {
@@ -37,6 +39,11 @@ const defaultsReducer = (state = initialState, action) => {
       return {
         ...state,
         ...action.payload,
+      };
+    case ACCEPT_REGISTER:
+      return {
+        ...state,
+        acceptedRegister: true,
       };
     case UPDATED_STARTDATE:
       return {

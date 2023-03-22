@@ -7,15 +7,20 @@ import SubmitButton from "../../components/submitButton";
 import { globalStyles } from "../../styles/global";
 import { useTheme } from "../../contexts/themeContext";
 import data from "../shared/data";
+import { acceptRegister } from "../../redux/actions/defaultsActions";
+import { useDispatch } from "react-redux";
 
 export const SLIDER_WIDTH = Dimensions.get("window").width;
 export const ITEM_WIDTH = Math.round(Dimensions.get("window").width);
 export const CONTAINER_WIDTH = Dimensions.get("window").width * 0.6;
 
 const Landing = ({ navigation }) => {
+  const dispatch = useDispatch();
   const { colors, isDark } = useTheme();
   const isCarousel = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  const acceptRegisterDis = () => dispatch(acceptRegister());
 
   const CarouselCardItem = ({ item, index }) => {
     return (
@@ -79,10 +84,7 @@ const Landing = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.landingBottom}>
-          <SubmitButton
-            text="Let me in!"
-            onPressAction={() => navigation.navigate("Register")}
-          />
+          <SubmitButton text="Let me in!" onPressAction={acceptRegisterDis} />
         </View>
       </View>
     </SafeAreaView>

@@ -1,17 +1,15 @@
 {
   "name": "sight20",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web",
-    "eject": "expo eject",
     "clean:node": "rm -rf yarn.lock package-lock.json node_modules",
-    "build:all": "eas build",
     "build:ios": "eas build --platform ios --local",
     "build:android": "eas build -p android --local",
-    "submit:ios": "eas submit --platform ios"
+    "bump:patch": "npx react-native bump-version --type patch",
+    "bump:minor": "npx react-native bump-version --type minor"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.17.7",
@@ -54,7 +52,8 @@
     "redux-thunk": "^2.4.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.9"
+    "@babel/core": "^7.12.9",
+    "react-native-cli-bump-version": "^1.5.0"
   },
   "private": true
 }
